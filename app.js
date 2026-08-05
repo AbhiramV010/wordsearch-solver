@@ -91,7 +91,7 @@ async function requestSolve() {
   status(`${found} of ${results.length} word${results.length > 1 ? "s" : ""} found.`);
 }
 
-// which colours land on each cell, given the ticked checkboxes
+// which colour lands on each cell, given the ticked checkboxes
 function highlightMap() {
   const map = new Map();
 
@@ -101,28 +101,12 @@ function highlightMap() {
 
       for (const [r, c] of match.path) {
         const key = `${r},${c}`;
-        const colors = map.get(key) || [];
-        if (!colors.includes(wordIndex)) colors.push(wordIndex); // a cell can hold crossing words
-        map.set(key, colors);
+        if (!map.has(key)) map.set(key, wordIndex); // where words cross, the first one keeps the cell
       }
     });
   });
 
   return map;
-}
-
-function paint(cell, wordIndexes) {
-  if (wordIndexes.length === 1) {
-    cell.style.background = colorOf(wordIndexes[0]);
-    return;
-  }
-
-  // where words cross, split the cell between colours
-  const slice = 100 / wordIndexes.length;
-  const stops = wordIndexes
-    .map((w, i) => `${colorOf(w)} ${i * slice}% ${(i + 1) * slice}%`)
-    .join(", ");
-  cell.style.background = `linear-gradient(135deg, ${stops})`;
 }
 
 function renderGrid() {
@@ -138,10 +122,10 @@ function renderGrid() {
       cell.className = "cell";
       cell.textContent = letter;
 
-      const hits = map.get(`${r},${c}`);
-      if (hits) {
+      const hit = map.get(`${r},${c}`);
+      if (hit !== undefined) {
         cell.classList.add("hit");
-        paint(cell, hits);
+        cell.style.background = colorOf(hit); // word 0 is a valid index, so check for undefined
       }
 
       gridEl.appendChild(cell);
@@ -198,7 +182,7 @@ function renderLegend() {
     swatch.style.background = colorOf(wordIndex);
 
     const label = document.createElement("span");
-    label.textContent = count === 0 ? `${result.word} — not found`
+    label.textContent = count === 0 ? `${result.word} (not found)`
                       : count === 1 ? result.word
                       : `${result.word} ×${count}`;
 

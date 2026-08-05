@@ -1,30 +1,31 @@
+# Word Search Solver
 
+- Solves word search grids, all eight directions
+- Python 3.12, standard library only, no NumPy, nothing to install
+- `searchsolve.py` is both the solver and the web server (`http.server`), so no build step
 
-This program efficiently solves word search puzzles.
-
-Written in Python 3.12, it uses user-defined functions and methods to get the job done.
-I made it so it does **not** use any external modules such as NumPy, because I wanted a challenge
-
-## Running it
+## Run
 
 ```
 python searchsolve.py
 ```
 
-Then open http://127.0.0.1:8000
+- Open http://127.0.0.1:8000
 
-`searchsolve.py` is both the solver and the web server. The server is `http.server` from the
-standard library, so there is still nothing to install and no build step.
+## Using it
 
-Type the grid one row per line — spaces between letters are optional, so `abcd` and `a b c d` are
-the same row. List the words one per line (or comma separated) and hit **Solve**. Every word gets
-its own colour on the grid, cells where two words cross are split between both colours, and
-clicking a word in the legend or a row in the results isolates it. Ctrl+Enter solves from either
-box.
+- Grid: one row per line, spaces optional, so `abcd` and `a b c d` are the same row
+- Ragged rows get padded to the widest row
+- Words: one per line, or comma separated
+- Ctrl+Enter (Cmd+Enter) solves from either box
+- One colour per word, reused past 8 words
+- Where two words cross, the cell takes the colour of the first one drawn
+- Checkboxes in the legend and results toggle what's drawn, either a whole word or one placement
+- Clear wipes both boxes and the output
 
-## Using the solver on its own
+## Solver on its own
 
-The algorithm has no I/O in it, so it imports cleanly:
+- No I/O in the algorithm, so it imports clean
 
 ```python
 from searchsolve import parse_grid, find_word, solve
@@ -34,14 +35,20 @@ find_word(grid, "cat")   # [{'direction': 'right', 'start': (0, 0), 'path': [...
 solve(grid, ["cat", "dog"])
 ```
 
-`find_word` returns every placement of a word, checking all eight directions from each starting
-letter. `solve` does the same for a list of words, keeping the order they were given in.
+- `parse_grid(text)` → list of rows, lowercased, whitespace stripped
+- `find_word(grid, word)` → every placement, checking all 8 directions from each starting letter
+- `solve(grid, words)` → same for a list, input order kept
+- Match shape: `{"direction", "start": (row, col), "path": [(row, col), ...]}`
+- A one-letter word matches once, not eight times
+
+## API
+
+- `POST /api/solve` with `{"grid": "<text>", "words": ["cat", ...]}`
+- Returns `{"grid": [[...]], "results": [{"word", "matches"}]}`
 
 ## How it works
 
-Each of the eight directions is a small function that takes a starting `(row, col)` and a step
-count and returns the coordinate it lands on. `letter_at` does the bounds checking for all of them
-in one place, which is what keeps a negative index from silently wrapping around to the far edge of
-the grid.
-
-Note that X and Y are flipped throughout: the notation is `(row, col)`, not `(x, y)`.
+- Each direction is a small function: takes a start `(row, col)` and a step count, returns where it lands
+- `letter_at` does the bounds checking for all eight in one place
+- That's what stops a negative index from wrapping to the far edge of the grid
+- X and Y are flipped throughout, so the notation is `(row, col)`, not `(x, y)`

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- a papyrus sheet ruled into an empty grid, with a magnifier over it -->
+  <defs>
+    <clipPath id="tile">
+      <rect width="32" height="32" rx="7"/>
+    </clipPath>
+    <linearGradient id="backing" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#4b3720"/>
+      <stop offset="1" stop-color="#291d10"/>
+    </linearGradient>
+    <linearGradient id="papyrus" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#efdcb0"/>
+      <stop offset="0.5" stop-color="#dcc189"/>
+      <stop offset="1" stop-color="#c19f62"/>
+    </linearGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#f7e6ae"/>
+      <stop offset="0.45" stop-color="#c99a3c"/>
+      <stop offset="1" stop-color="#6d4c16"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#d8cfae" stop-opacity="0.55"/>
+    </linearGradient>
+    <!-- the sheet, torn along every edge the way papyrus splits -->
+    <path id="sheet" d="M4.2 3.4 9 3 14 3.7 19 3 24 3.8 28.6 3.2 29 8 28.4 13 29 18 28.5 23
+      28.9 28.4 24 28.9 19 28.2 14 28.9 9 28.3 3.6 28.8 3.1 24 3.8 19 3 14 3.7 9Z"/>
+    <clipPath id="sheet-clip">
+      <use href="#sheet"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect width="32" height="32" fill="url(#backing)"/>
+    <use href="#sheet" fill="url(#papyrus)"/>
+
+    <!-- pressed reed fibres: horizontals over verticals, as papyrus is actually laid -->
+    <g clip-path="url(#sheet-clip)">
+      <g stroke="#8a6a35" stroke-opacity="0.16" stroke-width="0.6">
+        <path d="M0 5.5H32M0 8.5H32M0 11.5H32M0 14.5H32M0 17.5H32M0 20.5H32M0 23.5H32M0 26.5H32"/>
+      </g>
+      <g stroke="#8a6a35" stroke-opacity="0.1" stroke-width="0.5">
+        <path d="M6 0V32M10 0V32M14 0V32M18 0V32M22 0V32M26 0V32"/>
+      </g>
+      <use href="#sheet" fill="none" stroke="#8a6538" stroke-opacity="0.5" stroke-width="1"/>
+    </g>
+
+    <!-- empty 3x3 grid, brushed on in faded ink -->
+    <g stroke="#4a3116" stroke-opacity="0.85" stroke-linecap="round" fill="none">
+      <path d="M10.4 6.1C10.2 10 10.5 15.5 10.3 19.6" stroke-width="1.9"/>
+      <path d="M15.2 6C15.4 10.5 15.1 15 15.3 19.5" stroke-width="1.8"/>
+      <path d="M6.1 10.4C10 10.6 15.5 10.2 19.6 10.5" stroke-width="1.9"/>
+      <path d="M6 15.2C10.5 15 15 15.4 19.5 15.1" stroke-width="1.8"/>
+    </g>
+  </g>
+
+  <!-- brass magnifier -->
+  <g>
+    <ellipse cx="21.9" cy="22.6" rx="5.9" ry="5.6" fill="#1c1409" opacity="0.3"/>
+    <path d="M24.9 24.9L28.6 28.6" stroke="#4a3416" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M24.9 24.9L28.6 28.6" stroke="url(#brass)" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="21.4" cy="21.4" r="4.9" fill="url(#glass)"/>
+    <circle cx="21.4" cy="21.4" r="4.9" fill="none" stroke="url(#brass)" stroke-width="2.1"/>
+    <circle cx="21.4" cy="21.4" r="5.95" fill="none" stroke="#241a0c" stroke-opacity="0.45"
+      stroke-width="0.7"/>
+    <path d="M18.6 19.4a3.6 3.6 0 0 1 2.6-1.6" stroke="#ffffff" stroke-opacity="0.85"
+      stroke-width="1.1" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="none" stroke="#000000"
+    stroke-opacity="0.35"/>
+</svg>

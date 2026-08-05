@@ -1,141 +1,131 @@
 """
-    Start of program
-    If there are multiple instances of a word it will find the first occuring incidence ONLY
+    Word search solver
+    Searches a grid in all eight directions, standard library only
+    Run this file to serve the web front end
     In this program, X and Y are flipped, so instead of X,Y the notation is Y,X
 """
 
-global search
-search=[]
+import json
+import mimetypes
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
-rows=int(input("How many rows> "))
-cols=int(input("How many columns> "))
+ROOT = Path(__file__).parent
+HOST = "127.0.0.1"
+PORT = 8000
 
-for x in range(0,rows): # Filling up rows with data, then pushing them to the SEARCH list
-    print(f"entering the info for row number: {x+1}")
-    o=[]
-    for p in range(0,cols):
-        a=input("letter> ")
-        o.append(a)
-    search.append(o)
+mimetypes.add_type("font/ttf", ".ttf")  # not in every platform's mime table
 
-query=input("What word would you like to find? ")
-query=query.lower()
-query=list(query)
 
-fs=query[0]
+# each direction returns the coordinate i steps away
 
-def get_2d_coords(lst,tgt):#lst is the search, tgt is the target as a string
-    cod=[]
-    for x in range(0,len(lst)):
-        for p in range(0,len(lst[x])):
-            if tgt==lst[x][p]: cod.append((x,p)) 
+def up(tup, i): return (tup[0] - i, tup[1]) # this works, i is for loop iterator so we know how much to push off
+def down(tup, i): return (tup[0] + i, tup[1]) # this works
+def left(tup, i): return (tup[0], tup[1] - i) # this works
+def right(tup, i): return (tup[0], tup[1] + i) # this works
+def updiagl(tup, i): return (tup[0] - i, tup[1] - i) #this works
+def updiagr(tup, i): return (tup[0] - i, tup[1] + i) # this works
+def downdiagl(tup, i): return (tup[0] + i, tup[1] - i) # this works
+def downdiagr(tup, i): return (tup[0] + i, tup[1] + i) # this works
+
+DIRECTIONS = [
+    ("up", up),
+    ("down", down),
+    ("left", left),
+    ("right", right),
+    ("top left", updiagl),
+    ("top right", updiagr),
+    ("bottom left", downdiagl),
+    ("bottom right", downdiagr),
+]
+
+
+def letter_at(grid, coord): # the letter at coord, or None if off grid
+    row, col = coord
+    if row < 0 or col < 0: return None  # a negative index would wrap around
+    try: return grid[row][col]
+    except IndexError: return None
+
+
+def parse_grid(text): # one row per line, spaces optional
+    rows = []
+    for line in text.splitlines():
+        letters = [ch.lower() for ch in line if not ch.isspace()]
+        if letters: rows.append(letters)
+
+    width = max((len(row) for row in rows), default=0)
+    for row in rows:
+        row.extend([""] * (width - len(row)))  # pad ragged rows so the grid stays square
+    return rows
+
+
+def get_2d_coords(lst, tgt):#lst is the search, tgt is the target as a string
+    cod = []
+    for x in range(len(lst)):
+        for p in range(len(lst[x])):
+            if lst[x][p] == tgt: cod.append((x, p))
     return cod
-     
-startpoints = get_2d_coords(search, fs)
-
-def up(tup,i): # this works, i is for loop iterator so we know how much to push off  
-    if tup[0]-i<0: return None
-    try: return search[tup[0]-i][tup[1]]
-    except IndexError: return None  
-
-def down(tup,i): # this works
-    if tup[0]+i<0: return None
-    try: return search[tup[0]+i][tup[1]]  
-    except IndexError: return None
-def left(tup,i): # this works
-    if tup[0]-i<0: return None
-    try: return search[tup[0]][tup[1]-i]
-    except IndexError: return None
-
-def right(tup,i): # this works
-    try: return search[tup[0]][tup[1]+i]  
-    except IndexError: return None
-
-def updiagl(tup,i): #this works
-    if tup[1]-i <0: return None
-    if tup[0]-i <0: return None
-    try: return search[tup[0]-i][tup[1]-i]
-    except IndexError: return None
-
-def updiagr(tup,i): # this works
-    if tup[1]+i <0: return None
-    if tup[0]-i <0: return None
-    try: return search[tup[0]-i][tup[1]+i]
-    except IndexError: return None
-
-def downdiagr(tup,i): # this works
-    if tup[1]+i <0: return None
-    if tup[0]+i <0: return None
-    try: return search[tup[0]+i][tup[1]+i]
-    except IndexError: return None
-
-def downdiagl(tup,i): # this works
-    if tup[1]+i <0: return None
-    if tup[0]-i <0: return None
-    try: return search[tup[0]+i][tup[1]-i]
-    except IndexError: return None
 
 
-for x in startpoints: # iterating through each starting point, getting the first two letters in each dir
-    
-    trails=[[],[],[],[],[],[],[],[]] 
-    for _ in trails:
-        _.append(fs)
-        
-    for y in range(1,len(query)): # This function takes a step in each direction for the first 2 letters, then we know what direction to go in.
-        trails[0].append(up(x,y)) # x,y is NOT The coordinates, X is the tuple and Y is the iterator
-        trails[1].append(down(x,y))
-        trails[2].append(left(x,y))
-        trails[3].append(right(x,y))
-        trails[4].append(updiagl(x,y))
-        trails[5].append(updiagr(x,y))
-        trails[6].append(downdiagl(x,y))
-        trails[7].append(downdiagr(x,y))
-    
-    for p in trails:
-                
-        if p == query:
-            
-            dir = trails.index(p) #numerical direction in which the algorithim shall traverse in
-            if dir==0:
-                dir="up"
-                lst=trails[0]
-                
-            elif dir==1:
-                dir='down'
-                lst=trails[1]
-                          
-            elif dir==2:
-                dir='left'
-                lst=trails[2]
-                
-            elif dir==3:
-                dir='right'
-                lst=trails[3]
-              
-            elif dir==4:
-                dir='top left'
-                lst=trails[4]
-          
-            elif dir==5:
-                dir= 'top right'
-                lst=trails[5]
-           
-            elif dir==6:
-                dir= 'bottom left'
-                lst=trails[6]
-        
-            elif dir==7:
-                dir= 'bottom right'
-                lst=trails[7]
-            
-            print(f'Start from coordinate {x} going {dir}')            
-        
-        found=False    
-        
+def find_word(grid, word): # every placement of one word
+    query = [ch for ch in word.lower() if not ch.isspace()]
+    if not query: return []
 
-    
-    
-    
-# its only locating the first two letters because we are not changing X (the coord value in which Python goes in each direction)
-# Go in each direction until the second letters are known, then slice the (query list)'s first two values and match the prediction and the slice.
+    matches = []
+    for start in get_2d_coords(grid, query[0]):
+        for name, step in DIRECTIONS:
+            path = [start]
+            for i in range(1, len(query)):
+                coord = step(start, i)
+                if letter_at(grid, coord) != query[i]: break
+                path.append(coord)
+            else:
+                matches.append({"direction": name, "start": start, "path": path})
+                if len(query) == 1: break  # a single letter sits in every direction at once
+    return matches
+
+
+def solve(grid, words): # several words at once, order kept
+    return [{"word": word, "matches": find_word(grid, word)} for word in words]
+
+
+class Handler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(ROOT), **kwargs)
+
+    def do_POST(self):
+        if self.path.rstrip("/") != "/api/solve":
+            self.send_error(404, "unknown endpoint")
+            return
+
+        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            payload = json.loads(self.rfile.read(length) or b"{}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self.send_error(400, "expected a JSON body")
+            return
+
+        grid = parse_grid(payload.get("grid") or "")
+        words = [w for w in (payload.get("words") or []) if isinstance(w, str)]
+        self.send_json({"grid": grid, "results": solve(grid, words)})
+
+    def send_json(self, data):
+        body = json.dumps(data).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store")  # so edits show up on refresh
+        super().end_headers()
+
+    def log_message(self, *_args):
+        pass  # the server does not need to narrate every request
+
+
+if __name__ == "__main__":
+    print("Running at https://localhost:8000")
+    with ThreadingHTTPServer((HOST, PORT), Handler) as httpd:
+        httpd.serve_forever()

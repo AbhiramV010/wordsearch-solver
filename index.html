@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Search Solver</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/StackSansNotch-Regular.ttf" as="font" type="font/ttf"
+    crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Word Search Solver</h1>
+      <p class="sub">Type the grid one row per line, list the words, and every match is found in all
+        eight directions.</p>
+    </header>
+
+    <section class="panel">
+      <div class="inputs">
+        <label class="field">
+          <span>Grid <em>one row per line &mdash; spaces optional</em></span>
+          <textarea id="grid-input" rows="9" spellcheck="false"
+            placeholder="a b c d&#10;efgh&#10;i j k l"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Words <em>one per line, or separated by commas</em></span>
+          <textarea id="words-input" rows="9" spellcheck="false"
+            placeholder="cat&#10;dog&#10;python"></textarea>
+        </label>
+      </div>
+
+      <div class="row">
+        <button id="solve" class="primary">Solve</button>
+        <button id="clear" class="ghost">Clear</button>
+        <p id="status" class="status"></p>
+      </div>
+    </section>
+
+    <section class="panel" id="output" hidden>
+      <div id="legend" class="legend"></div>
+      <div id="grid" class="grid"></div>
+      <div id="results" class="results"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

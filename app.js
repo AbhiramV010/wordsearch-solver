@@ -65,10 +65,14 @@ function status(message, isError = false) {
 // Pinned, so an upstream release can never change what the site runs
 const PYODIDE_URL = "https://cdn.jsdelivr.net/npm/pyodide@314.0.3/";
 
-let pythonPromise = null; // the interpreter is fetched once, on the first solve
+let pythonPromise = null; // the interpreter is fetched once, then reused
 
 function startPython() {
-  if (!pythonPromise) pythonPromise = loadPython();
+  if (!pythonPromise) {
+    pythonPromise = loadPython();
+    // a preload that fails is reported when a solve asks for it, not on an empty page
+    pythonPromise.catch(() => {});
+  }
   return pythonPromise;
 }
 
@@ -91,8 +95,7 @@ async function requestSolve() {
   if (!gridText.trim()) return status("Enter a grid first.", true);
   if (words.length === 0) return status("Enter at least one word.", true);
 
-  // only the very first solve waits on the download, every later one is instant
-  status(pythonPromise ? "Solving…" : "Starting Python, this first run downloads the interpreter…");
+  status("Solving…");
 
   let data;
   try {
@@ -104,12 +107,14 @@ async function requestSolve() {
   }
 
   grid = data.grid;
-  results = data.results;
+  // a word that is not in the grid is dropped here, so nothing downstream lists it
+  results = data.results.filter((result) => result.matches.length > 0);
   selected = new Set(allKeys()); // start with everything shown
   render();
 
-  const found = results.filter((r) => r.matches.length > 0).length;
-  status(`${found} of ${results.length} word${results.length > 1 ? "s" : ""} found.`);
+  status(results.length === 0
+    ? "No words found."
+    : `${results.length} word${results.length > 1 ? "s" : ""} found.`);
 }
 
 // which colour lands on each cell, given the ticked checkboxes
@@ -185,27 +190,17 @@ function renderLegend() {
     const count = result.matches.length;
     const chip = document.createElement("label");
     chip.className = "check chip";
-    chip.classList.toggle("dim", count === 0);
 
-    if (count === 0) {
-      const box = document.createElement("input");
-      box.type = "checkbox";
-      box.disabled = true;
-      chip.appendChild(box);
-    } else {
-      const box = groupBox(keysOfWord(wordIndex));
-      box.dataset.focusKey = `word:${wordIndex}`;
-      chip.appendChild(box);
-    }
+    const box = groupBox(keysOfWord(wordIndex));
+    box.dataset.focusKey = `word:${wordIndex}`;
+    chip.appendChild(box);
 
     const swatch = document.createElement("span");
     swatch.className = "swatch";
     swatch.style.background = colorOf(wordIndex);
 
     const label = document.createElement("span");
-    label.textContent = count === 0 ? `${result.word} (not found)`
-                      : count === 1 ? result.word
-                      : `${result.word} ×${count}`;
+    label.textContent = count === 1 ? result.word : `${result.word} ×${count}`;
 
     chip.append(swatch, label);
     list.appendChild(chip);
@@ -217,8 +212,7 @@ function renderLegend() {
 function renderResults() {
   resultsEl.innerHTML = "";
 
-  const total = results.reduce((sum, r) => sum + r.matches.length, 0);
-  if (total === 0) {
+  if (results.length === 0) {
     resultsEl.innerHTML = '<p class="empty">None of those words are in this grid.</p>';
     return;
   }
@@ -293,3 +287,7 @@ for (const box of [gridInput, wordsInput]) {
     }
   });
 }
+
+// the interpreter starts downloading while the grid is still being typed, so by
+// the time Solve is pressed it is usually already there, with nothing to announce
+startPython();

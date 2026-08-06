@@ -5,20 +5,17 @@
 - `solver.py` holds the algorithm and is the only copy of it
 - `searchsolve.py` serves the page locally, no build step
 
-## Run
+## Check it Out
 
-```
-python searchsolve.py
-```
-
-- Open http://127.0.0.1:8000
+- The running version is at https://searchsolver.netlify.app
+- Nothing to install and nothing to sign up for, it solves in the browser
 
 ## Deployed
 
 - The site is static, so the host runs no Python of its own
 - Instead the page loads Pyodide, which is CPython built for WebAssembly, and runs `solver.py` in the browser
 - So the deployed solver is the same Python file, not a rewrite in JavaScript
-- The interpreter is fetched on the first solve only, then cached by the browser
+- The interpreter is fetched once when the page opens, then cached by the browser, so a solve does not wait on it
 - Nothing is uploaded anywhere, the grid never leaves the page
 - The Pyodide version is pinned in `app.js`, so an upstream release cannot change what the site runs
 
@@ -27,6 +24,7 @@ python searchsolve.py
 - Grid: one row per line, spaces optional, so `abcd` and `a b c d` are the same row
 - Ragged rows get padded to the widest row
 - Words: one per line, or comma separated
+- A word that is not in the grid is dropped from the output, the page never lists it
 - Ctrl+Enter (Cmd+Enter) solves from either box
 - One colour per word, reused past 8 words
 - Where two words cross, the cell takes the colour of the first one drawn
@@ -50,6 +48,7 @@ solve(grid, ["cat", "dog"])
 - `solve(grid, words)` → same for a list, input order kept
 - Match shape: `{"direction", "start": (row, col), "path": [(row, col), ...]}`
 - A one-letter word matches once, not eight times
+- A word with no placements comes back with an empty `matches` list, the page is what drops it
 
 ## API
 

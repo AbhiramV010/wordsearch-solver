@@ -161,8 +161,6 @@ button:hover { filter: brightness(1.08); }
 
 .chip:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .chip:has(input:indeterminate) { border-color: var(--accent); }
-.chip.dim { opacity: 0.5; }
-.chip.dim, .chip.dim input { cursor: default; }
 
 .swatch {
   width: 12px;
@@ -170,8 +168,6 @@ button:hover { filter: brightness(1.08); }
   border-radius: 3px;
   flex: none;
 }
-
-.chip.dim .swatch { background: var(--muted) !important; }
 
 .grid {
   display: grid;

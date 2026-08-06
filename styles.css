@@ -218,5 +218,16 @@ button:hover { filter: brightness(1.08); }
 .result .word { font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .result .dir { color: var(--muted); }
 
+.attribution {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.attribution p { margin: 0; }
+.attribution a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.attribution a:hover { color: var(--accent); }
+
 .empty { color: var(--muted); font-size: 14px; margin: 0; }
 .count { font-size: 13px; color: var(--muted); margin: 0 0 10px; }

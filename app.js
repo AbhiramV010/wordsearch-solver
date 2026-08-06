@@ -60,6 +60,30 @@ function status(message, isError = false) {
   statusEl.classList.toggle("error", isError);
 }
 
+// Pyodide is CPython built for WebAssembly, so solver.py runs as Python in the
+// browser. That is what lets a static host serve this with no back end at all.
+// Pinned, so an upstream release can never change what the site runs
+const PYODIDE_URL = "https://cdn.jsdelivr.net/npm/pyodide@314.0.3/";
+
+let pythonPromise = null; // the interpreter is fetched once, on the first solve
+
+function startPython() {
+  if (!pythonPromise) pythonPromise = loadPython();
+  return pythonPromise;
+}
+
+async function loadPython() {
+  const { loadPyodide } = await import(`${PYODIDE_URL}pyodide.mjs`);
+  const pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
+
+  const response = await fetch("solver.py");
+  if (!response.ok) throw new Error(`could not load solver.py (${response.status})`);
+  pyodide.runPython(await response.text());
+
+  console.log(`Python ${pyodide.runPython("import sys; sys.version")} via Pyodide ${pyodide.version}`);
+  return pyodide.globals.get("solve_json"); // strings in, JSON string out
+}
+
 async function requestSolve() {
   const gridText = gridInput.value;
   const words = parseWords(wordsInput.value);
@@ -67,19 +91,16 @@ async function requestSolve() {
   if (!gridText.trim()) return status("Enter a grid first.", true);
   if (words.length === 0) return status("Enter at least one word.", true);
 
-  status("Solving…");
+  // only the very first solve waits on the download, every later one is instant
+  status(pythonPromise ? "Solving…" : "Starting Python, this first run downloads the interpreter…");
+
   let data;
   try {
-    const response = await fetch("/api/solve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ grid: gridText, words }),
-    });
-    if (!response.ok) throw new Error(`the server returned ${response.status}`);
-    data = await response.json();
+    const solveJson = await startPython();
+    data = JSON.parse(solveJson(gridText, JSON.stringify(words)));
   } catch (err) {
-    // usually means the page was opened without the server
-    return status(`Could not reach the solver: ${err.message}. Is searchsolve.py running?`, true);
+    pythonPromise = null; // a failed load should not poison every later attempt
+    return status(`Could not start the Python solver: ${err.message}`, true);
   }
 
   grid = data.grid;

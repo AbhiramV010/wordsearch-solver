@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Stack Sans Notch"; src: url("StackSansNotch-Regular.ttf") format("truetype"); }
+:root {
+  --bg:#14171b; --panel:#1c2026; --text:#e9ecf1; --muted:#99a1ad; --line:#2e343d;
+  --accent:#5b8cff; --accent-soft:#24304a; --ink:#16191d;
+  --font:"Stack Sans Notch", Inter, sans-serif; --mono:"DejaVu Sans Mono", monospace;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--font); }
+#stage { position:absolute; inset:0; overflow:hidden;
+  background: radial-gradient(1200px 700px at 50% 40%, #1a1f27 0%, var(--bg) 70%); }
+.dots { position:absolute; inset:0; opacity:.35;
+  background-image: radial-gradient(#2e343d 1.2px, transparent 1.4px); background-size:32px 32px; }
+.scene { position:absolute; inset:0; opacity:0; }
+.cap { position:absolute; left:0; right:0; text-align:center; font-size:60px; font-weight:700; letter-spacing:-0.02em; }
+.cap .hl { color:#4c9aff; }
+.cell { position:absolute; display:flex; align-items:center; justify-content:center;
+  border:1.5px solid var(--line); border-radius:10px; background:var(--panel);
+  font-weight:600; text-transform:uppercase; color:var(--text); }
+.cell.hit { color:var(--ink); border-color:transparent; }
+.win { position:absolute; background:var(--bg); border:1.5px solid var(--line); border-radius:16px; overflow:hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,.55); }
+.chrome { height:52px; background:var(--panel); border-bottom:1.5px solid var(--line); display:flex; align-items:center; padding:0 20px; gap:10px; }
+.chrome i { width:14px; height:14px; border-radius:50%; background:#3a414c; display:block; }
+.url { margin-left:24px; flex:1; max-width:560px; height:32px; border-radius:8px; background:var(--bg); border:1px solid var(--line);
+  color:var(--muted); font-size:17px; display:flex; align-items:center; padding:0 14px; font-family:Inter, sans-serif; }
+.site { padding:36px 48px; }
+.site h1 { margin:0 0 8px; font-size:46px; letter-spacing:-0.02em; }
+.site .sub { margin:0; color:var(--muted); font-size:22px; line-height:1.5; }
+.panel { background:var(--panel); border:1.5px solid var(--line); border-radius:14px; padding:24px; }
+.inputs { display:grid; grid-template-columns:2fr 1fr; gap:24px; margin-bottom:22px; }
+.field > span { display:block; font-size:19px; color:var(--muted); margin-bottom:10px; }
+.field em { font-style:normal; opacity:.75; }
+.ta { font:22px/1.55 var(--mono); letter-spacing:0.08em; background:var(--bg); border:1.5px solid var(--line); border-radius:10px;
+  padding:14px 16px; height:400px; white-space:pre; color:var(--text); overflow:hidden; }
+.ta.focus { outline:2.5px solid var(--accent); outline-offset:-1px; }
+.caret { display:inline-block; width:2px; height:1.1em; background:var(--text); vertical-align:-0.15em; }
+.row { display:flex; gap:16px; align-items:center; }
+.btn { font-size:22px; font-weight:500; border-radius:10px; padding:12px 26px; border:1.5px solid transparent; }
+.btn.primary { background:var(--accent); color:#fff; }
+.btn.ghost { color:var(--text); border-color:var(--line); }
+.status { font-size:19px; color:var(--muted); }
+.cursor { position:absolute; width:40px; height:40px; }
+.res { position:absolute; }
+.chips { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+.chip { display:inline-flex; align-items:center; gap:10px; padding:8px 18px 8px 12px; font-size:20px; border:1.5px solid var(--accent);
+  background:var(--accent-soft); border-radius:999px; }
+.box { width:20px; height:20px; border-radius:5px; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; }
+.box::after { content:""; width:9px; height:5px; border-left:2.5px solid #fff; border-bottom:2.5px solid #fff; transform:translateY(-1px) rotate(-45deg); }
+.sw { width:16px; height:16px; border-radius:4px; }
+.result { display:flex; gap:16px; align-items:center; padding:14px 18px; border:1.5px solid var(--line); border-left:6px solid var(--line);
+  border-radius:10px; margin-bottom:10px; font-size:21px; background:var(--accent-soft); }
+.result .body { display:flex; justify-content:space-between; flex:1; gap:16px; }
+.result .word { font-weight:600; text-transform:uppercase; letter-spacing:.04em; width:120px; }
+.result .dir { color:var(--muted); }
+.code { position:absolute; background:#101317; border:1.5px solid var(--line); border-radius:16px; padding:28px 32px; font:19px/1.6 var(--mono); white-space:pre; }
+.code .ln { display:block; }
+.kw { color:#b18cff; } .fn { color:#79e2f2; } .str { color:#57d9a3; } .cm { color:#646b76; } .num { color:#ffab00; }
+.tab { position:absolute; top:-1px; left:28px; transform:translateY(-100%); background:#101317; border:1.5px solid var(--line); border-bottom:none;
+  border-radius:10px 10px 0 0; padding:8px 18px; font:18px var(--mono); color:var(--muted); }
+.node { position:absolute; left:0; right:0; height:132px; border-radius:16px; border:1.5px solid var(--line); background:var(--panel);
+  display:flex; flex-direction:column; justify-content:center; padding:0 30px; }
+.node b { font-size:34px; font-weight:700; }
+.node span { font-size:21px; color:var(--muted); margin-top:6px; font-family:Inter, sans-serif; }
+.node.accent { border-color:var(--accent); background:var(--accent-soft); }
+.arrow { position:absolute; left:50%; width:3px; height:44px; background:var(--accent); transform:translateX(-50%); }
+.arrow::after { content:""; position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); border:10px solid transparent; border-top:12px solid var(--accent); border-bottom:none; }
+.pill { display:inline-block; padding:14px 30px; border-radius:999px; border:1.5px solid var(--accent); background:var(--accent-soft); font-size:36px; font-family:Inter, sans-serif; font-weight:500; }
+</style></head>
+<body>
+<div id="stage">
+  <div class="dots"></div>
+
+  <!-- S1 hook -->
+  <div class="scene" id="s1">
+    <div class="cap" id="s1cap" style="top:64px">Somewhere in here is <span class="hl">PYTHON</span>.</div>
+    <div id="g1"></div>
+  </div>
+
+  <!-- S2 site, input -->
+  <div class="scene" id="s2">
+    <div class="cap" id="s2cap" style="top:52px">Paste the grid. List the words.</div>
+    <div class="win" id="win" style="left:250px; top:160px; width:1420px; height:880px">
+      <div class="chrome"><i></i><i></i><i></i><div class="url">searchsolver.netlify.app</div></div>
+      <div class="site">
+        <h1>Word Search Solver</h1>
+        <p class="sub">Relatively self-explanatory, just enter your search &amp; words, and let it work!</p>
+        <p class="sub" style="margin-bottom:26px">This does not use AI to solve, but a directional scan algorithm.</p>
+        <div class="panel">
+          <div class="inputs">
+            <div class="field"><span>Grid: <em>Write out each row like this: (a b c d) or (abcd)</em></span><div class="ta" id="taGrid"></div></div>
+            <div class="field"><span>Words <em>one per line, or separated by commas</em></span><div class="ta" id="taWords"></div></div>
+          </div>
+          <div class="row">
+            <div class="btn primary" id="solveBtn">Solve</div>
+            <div class="btn ghost">Clear</div>
+            <div class="status" id="status"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 19 L8.5 15 L11.5 22 L14.5 20.7 L11.6 14 L18 14 Z" fill="#fff" stroke="#16191d" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  </div>
+
+  <!-- S3 results -->
+  <div class="scene" id="s3">
+    <div class="cap" id="s3cap" style="top:52px">Every word. All 8 directions.</div>
+    <div class="panel" id="gpanel" style="position:absolute; left:150px; top:180px; width:830px; height:830px"></div>
+    <div id="g3"></div>
+    <div class="res" id="res" style="left:1050px; top:180px; width:720px">
+      <div class="chips" id="chips"></div>
+      <div id="rows"></div>
+    </div>
+  </div>
+
+  <!-- S4 real python -->
+  <div class="scene" id="s4">
+    <div class="cap" id="s4cap" style="top:52px">Real Python. In your browser.</div>
+    <div class="code" id="code" style="left:110px; top:230px; width:1130px; height:auto"><div class="tab">solver.py</div><div id="codeLines"></div></div>
+    <div id="pipe" style="position:absolute; left:1320px; top:230px; width:490px; height:640px">
+      <div class="node" id="n1" style="top:0"><b>solver.py</b><span>the same file you run locally</span></div>
+      <div class="arrow" id="a1" style="top:150px"></div>
+      <div class="node accent" id="n2" style="top:212px"><b>Pyodide</b><span>CPython built for WebAssembly</span></div>
+      <div class="arrow" id="a2" style="top:362px"></div>
+      <div class="node" id="n3" style="top:424px"><b>Your browser</b><span>static page, no back end</span></div>
+    </div>
+    <div class="cap" id="s4b" style="top:940px; font-size:42px; font-weight:500; color:var(--muted)">No server. Your grid never leaves the page.</div>
+  </div>
+
+  <!-- S5 outro -->
+  <div class="scene" id="s5">
+    <img id="logo" src="favicon.svg" style="position:absolute; left:860px; top:170px; width:200px; height:200px">
+    <div class="cap" id="s5t" style="top:420px; font-size:104px">Word Search Solver</div>
+    <div class="cap" id="s5u" style="top:590px"><span class="pill">searchsolver.netlify.app</span></div>
+    <div class="cap" id="s5c" style="top:730px; font-size:38px; font-weight:500; color:var(--muted)">Built by Abhiram Vadali</div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const COLORS = ["#4c9aff","#ffab00","#57d9a3","#ff8f73","#b18cff","#79e2f2","#f78fb3","#c0ca33"];
+const G = DATA.text.split("\n").map(r => r.split(""));
+const R = DATA.results;
+const N = G.length;
+const $ = id => document.getElementById(id);
+
+const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
+const prog = (t,a,b) => clamp((t-a)/(b-a));
+const easeOut = x => 1 - Math.pow(1-x, 3);
+const easeInOut = x => x<.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2;
+const backOut = x => { const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(x-1,3) + c1*Math.pow(x-1,2); };
+const mix = (a,b,x) => a + (b-a)*x;
+
+// fade in at [a,a+d], out at [b,b+d]
+function inOut(t, a, b, d=0.3) { return easeOut(prog(t,a,a+d)) * (1 - easeOut(prog(t,b,b+d))); }
+
+function rise(el, t, a, b, dist=24, d=0.35) {
+  const p = easeOut(prog(t,a,a+d)), q = easeOut(prog(t,b,b+d));
+  el.style.opacity = p*(1-q);
+  el.style.transform = `translateY(${(1-p)*dist - q*12}px)`;
+}
+
+// grid builder
+function buildGrid(host, x0, y0, size, gap, font) {
+  const cells = [];
+  for (let r=0;r<N;r++) { cells.push([]); for (let c=0;c<N;c++) {
+    const d = document.createElement("div"); d.className="cell"; d.textContent=G[r][c];
+    Object.assign(d.style, {left:(x0+c*(size+gap))+"px", top:(y0+r*(size+gap))+"px", width:size+"px", height:size+"px", fontSize:font+"px"});
+    host.appendChild(d); cells[r].push(d);
+  }}
+  return cells;
+}
+const g1 = buildGrid($("g1"), 960-(10*76+9*8)/2, 196, 76, 8, 38);
+const g3 = buildGrid($("g3"), 150+30, 180+30, 70, 7.8, 34);
+
+// first word drawn keeps a crossing cell, as on the site
+const owner = {};
+R.forEach((res,w) => res.matches[0].path.forEach(([r,c],i) => { const k=r+","+c; if(!(k in owner)) owner[k]={w,i}; }));
+
+// chips + rows
+R.forEach((res,w) => {
+  const m = res.matches[0];
+  const chip = document.createElement("div"); chip.className="chip";
+  chip.innerHTML = `<span class="box"></span><span class="sw" style="background:${COLORS[w]}"></span><span>${res.word}</span>`;
+  $("chips").appendChild(chip);
+  const row = document.createElement("div"); row.className="result"; row.style.borderLeftColor=COLORS[w];
+  row.innerHTML = `<span class="box"></span><span class="body"><span class="word">${res.word}</span><span>Row ${m.start[0]+1}, Col ${m.start[1]+1}</span><span class="dir">going ${m.direction}</span></span>`;
+  $("rows").appendChild(row);
+});
+const chipEls = [...$("chips").children], rowEls = [...$("rows").children];
+
+// code lines with light highlighting
+function hl(line) {
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  let code = line, cm = "";
+  const h = line.indexOf("#");
+  if (h >= 0) { code = line.slice(0,h); cm = line.slice(h); }
+  code = esc(code)
+    .replace(/(&quot;|"[^"]*")/g, '<span class="str">$1</span>')
+    .replace(/\b(def|for|in|if|not|return|else|break)\b/g, '<span class="kw">$1</span>')
+    .replace(/\b(find_word|get_2d_coords|letter_at|range|len|step)\b(?=\()/g, '<span class="fn">$1</span>')
+    .replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+  return code + (cm ? `<span class="cm">${esc(cm)}</span>` : "");
+}
+const codeLines = DATA.code.split("\n").map(l => { const d=document.createElement("span"); d.className="ln"; d.innerHTML=hl(l)||" "; $("codeLines").appendChild(d); return d; });
+
+const gridText = DATA.text;
+const wordsText = R.map(r=>r.word).join("\n");
+
+const S = { s1:[0,3.0], s2:[3.25,7.85], s3:[8.1,12.4], s4:[12.65,16.4], s5:[16.65,99] };
+
+function render(t) {
+  for (const [id,[a,b]] of Object.entries(S)) {
+    const el = $(id);
+    const o = inOut(t, a, b, 0.25);
+    el.style.opacity = o;
+    el.style.visibility = o > 0.001 ? "visible" : "hidden";
+  }
+
+  // ---- S1
+  if (t < 3.6) {
+    const py = R[0].matches[0].path;
+    const pIdx = new Map(py.map(([r,c],i)=>[r+","+c,i]));
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
+      const el = g1[r][c], a = 0.05 + (r+c)*0.035;
+      const p = prog(t, a, a+0.35);
+      el.style.opacity = easeOut(p);
+      let s = mix(0.6, 1, backOut(p));
+      el.style.borderColor = ""; el.style.background = ""; el.style.color = ""; el.classList.remove("hit");
+      // the solver starts from every P
+      if (G[r][c] === "p") {
+        const q = inOut(t, 1.25, 2.0, 0.2);
+        if (q > 0) el.style.borderColor = `rgba(91,140,255,${q})`;
+      }
+      const k = r+","+c;
+      if (pIdx.has(k)) {
+        const i = pIdx.get(k), h = prog(t, 2.0+i*0.09, 2.0+i*0.09+0.18);
+        if (h > 0) {
+          el.classList.add("hit"); el.style.background = COLORS[0];
+          el.style.opacity = 1; s *= 1 + 0.12*Math.sin(Math.PI*h);
+          el.style.color = "#16191d";
+        }
+      }
+      el.style.transform = `scale(${s})`;
+    }
+    rise($("s1cap"), t, 0.35, 99, 28);
+  }
+
+  // ---- S2
+  if (t > 3.1 && t < 8.3) {
+    const w = easeOut(prog(t,3.3,3.9));
+    $("win").style.transform = `translateY(${(1-w)*70}px) scale(${mix(0.97,1,w)})`;
+    rise($("s2cap"), t, 3.45, 99);
+    // paste the grid at 4.3
+    const gp = prog(t, 4.25, 4.45);
+    $("taGrid").style.opacity = 1;
+    $("taGrid").innerHTML = gp > 0 ? gridText : "";
+    $("taGrid").style.background = gp > 0 && gp < 1 ? `rgba(91,140,255,${0.18*(1-gp)})` : "";
+    $("taGrid").classList.toggle("focus", t > 3.95 && t < 4.75);
+    // type words
+    const typeA = 4.8, per = 0.042;
+    const n = Math.floor(clamp((t-typeA)/per, 0, wordsText.length));
+    const typing = t > 4.75 && t < 6.6;
+    const blink = typing && (n < wordsText.length || Math.floor(t*3)%2===0);
+    $("taWords").innerHTML = wordsText.slice(0,n).replace(/&/g,"&amp;") + (blink ? '<span class="caret"></span>' : "");
+    $("taWords").classList.toggle("focus", typing);
+    // cursor to Solve
+    const cp = easeInOut(prog(t, 6.35, 6.95));
+    const bx = 250 + 48 + 24 + 60, by = 160 + 52 + 36 + 0; // rough, refined below
+    const btn = $("solveBtn").getBoundingClientRect();
+    const tx = btn.left + btn.width*0.55, ty = btn.top + btn.height*0.55;
+    const cx = mix(1500, tx, cp), cy = mix(1000, ty, cp) - Math.sin(Math.PI*cp)*60;
+    const cur = $("cursor");
+    cur.style.left = cx+"px"; cur.style.top = cy+"px";
+    cur.style.opacity = prog(t, 6.2, 6.35);
+    const press = inOut(t, 7.0, 7.12, 0.06);
+    $("solveBtn").style.transform = `scale(${1 - 0.06*press})`;
+    $("solveBtn").style.filter = press > 0 ? "brightness(1.15)" : "";
+    cur.style.transform = `scale(${1 - 0.12*press})`;
+    $("status").textContent = t > 7.6 ? "6 words found." : t > 7.08 ? "Solving…" : "";
+  }
+
+  // ---- S3
+  if (t > 7.9 && t < 12.8) {
+    rise($("s3cap"), t, 8.15, 99);
+    const gin = easeOut(prog(t, 8.1, 8.5));
+    $("gpanel").style.opacity = gin; $("g3").style.opacity = gin;
+    $("gpanel").style.transform = $("g3").style.transform = "";
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
+      const el = g3[r][c], o = owner[r+","+c];
+      el.classList.remove("hit"); el.style.background=""; el.style.transform="";
+      if (o) {
+        const a = 8.7 + o.w*0.45 + o.i*0.06, h = prog(t, a, a+0.16);
+        if (h > 0) { el.classList.add("hit"); el.style.background = COLORS[o.w]; el.style.transform = `scale(${1+0.14*Math.sin(Math.PI*h)})`; }
+      }
+    }
+    R.forEach((_,w) => {
+      const a = 8.65 + w*0.45;
+      rise(chipEls[w], t, a, 99, 14, 0.25);
+      rise(rowEls[w], t, a+0.05, 99, 18, 0.3);
+    });
+  }
+
+  // ---- S4
+  if (t > 12.5 && t < 16.8) {
+    rise($("s4cap"), t, 12.7, 99);
+    const ci = easeOut(prog(t,12.65,13.05));
+    $("code").style.opacity = ci; $("code").style.transform = `translateX(${(1-ci)*-40}px)`;
+    codeLines.forEach((l,i) => { const p = easeOut(prog(t, 12.8+i*0.045, 12.8+i*0.045+0.25)); l.style.opacity = p; l.style.transform = `translateX(${(1-p)*16}px)`; });
+    [["n1",13.15],["a1",13.4],["n2",13.5],["a2",13.75],["n3",13.85]].forEach(([id,a]) => rise($(id), t, a, 99, 20, 0.3));
+    rise($("s4b"), t, 14.1, 99, 16);
+  }
+
+  // ---- S5
+  if (t > 16.5) {
+    const lp = prog(t, 16.75, 17.2);
+    $("logo").style.opacity = easeOut(lp);
+    $("logo").style.transform = `scale(${mix(0.6,1,backOut(lp))}) rotate(${(1-easeOut(lp))*-10}deg)`;
+    rise($("s5t"), t, 16.95, 99, 30, 0.4);
+    rise($("s5u"), t, 17.3, 99, 20);
+    rise($("s5c"), t, 17.6, 99, 16);
+  }
+}
+window.render = render;
+render(0);
+</script>
+</body></html>

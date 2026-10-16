@@ -1,0 +1,1 @@
+I built a word search solver that runs real Python in your browser. The same solver.py I test locally runs on a static Netlify page through Pyodide, checking all 8 directions with no server, and your grid never leaves the page. Try it: https://searchsolver.netlify.app
